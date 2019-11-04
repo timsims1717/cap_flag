@@ -1,0 +1,18 @@
+(
+    axes: {
+    },
+    actions: {
+        "CameraMoveUp": [
+            [Key(Up)]
+        ],
+        "CameraMoveDown": [
+            [Key(Down)]
+        ],
+        "CameraMoveLeft": [
+            [Key(Left)]
+        ],
+        "CameraMoveRight": [
+            [Key(Right)]
+        ],
+    },
+)

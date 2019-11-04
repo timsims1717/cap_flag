@@ -1,0 +1,6 @@
+Map(
+    w: 8,
+    h: 8,
+    data: "ggdgdgggdgdddgdgdggdggdgdgggggdgdgddddgdggdgdgdgggdggdggdddddddg",
+    terrain_file: "256color"
+)

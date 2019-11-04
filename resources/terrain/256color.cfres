@@ -1,0 +1,23 @@
+TerrainSet(
+    texture_file: "256color",
+    texture_format: "png",
+    desc: "lo-fi tiles w/256 color restriction",
+    tile_size: 64,
+    num_tiles: 8,
+    tiles: [
+        TerrainTile(
+            name: "Grass1",
+            char_code: 'g',
+            tiles: [0,1,2,3],
+            height: 5,
+            slope: None,
+        ),
+        TerrainTile(
+            name: "Dirt1",
+            char_code: 'd',
+            tiles: [4,5,6,7],
+            height: 5,
+            slope: None,
+        ),
+    ],
+)

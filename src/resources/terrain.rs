@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use crate::map::{TerrainTile, Tile};
+use crate::resources::{TerrainTile, Tile};
 use amethyst::Error;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

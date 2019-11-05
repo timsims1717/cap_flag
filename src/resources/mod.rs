@@ -5,7 +5,7 @@ mod terrain;
 use std::fs;
 
 pub use self::terrain::TerrainSet;
-pub use self::map::Map;
+pub use self::map::{Map, MapDimensions};
 pub use self::tile::{TerrainTile, Tile};
 use ron::de::from_str;
 
@@ -53,14 +53,39 @@ pub fn load_terrain_pack(filename: String) -> amethyst::Result<TerrainSet> {
     Ok(terrain)
 }
 
-pub fn map_to_world_iso(map_x: f32, map_y: f32, tile_size: f32) -> (f32, f32) {
+pub fn map_to_world_iso(map_x: f32, map_y: f32) -> (f32, f32) {
+    let tile_size = 64.;
     let world_x = (map_x - map_y) * tile_size * 0.5;
     let world_y = (map_x + map_y) * tile_size * 0.25;
     (world_x, world_y)
 }
 
-pub fn world_to_map_iso(world_x: f32, world_y: f32, tile_size: f32) -> (f32, f32) {
-    let map_x = (world_x / (tile_size * 0.5) + world_y / (tile_size * 0.25)) / 2.;
-    let map_y = (world_y / (tile_size * 0.25) - world_x / (tile_size * 0.5)) / 2.;
+pub fn world_to_map_iso(world_x: f32, world_y: f32) -> (f32, f32) {
+    let tile_size = 64.;
+    let map_x = (world_x / (tile_size * 0.5) + world_y / (tile_size * 0.25)) * 0.5;
+    let map_y = (world_y / (tile_size * 0.25) - world_x / (tile_size * 0.5)) * 0.5;
     (map_x, map_y)
+}
+
+pub fn closest_point_in_map_iso(map_x: f32, map_y: f32, w: f32, h: f32) -> (f32, f32) {
+    let (x, y) = if map_x < 0. && map_y < 0. {
+        (0., 0.)
+    } else if map_x < 0. && map_y > h {
+        (0., h)
+    } else if map_x > w && map_y < 0. {
+        (w, 0.)
+    } else if map_x > w && map_y > h {
+        (w, h)
+    } else if map_x < 0. {
+        (0., map_y)
+    } else if map_x > w {
+        (w, map_y)
+    } else if map_y < 0. {
+        (map_x, 0.)
+    } else if map_y > h {
+        (map_x, h)
+    } else {
+        (map_x, map_y)
+    };
+    map_to_world_iso(x, y)
 }

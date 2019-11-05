@@ -9,10 +9,11 @@ use amethyst::{
     },
     utils::application_root_dir,
 };
-use crate::systems::CameraSystem;
+use crate::systems::{CameraSystem,WindowResizeSystem};
 
+mod components;
+mod resources;
 mod states;
-mod map;
 mod systems;
 
 fn main() -> amethyst::Result<()> {
@@ -38,7 +39,8 @@ fn main() -> amethyst::Result<()> {
                 )
                 .with_plugin(RenderFlat2D::default()),
         )?
-        .with(CameraSystem, "camera", &[]);
+        .with(CameraSystem, "camera", &[])
+        .with(WindowResizeSystem::new(), "window_resize", &[]);
 
     let mut game = Application::new(resources, states::MapEditorState, game_data)?;
     game.run();

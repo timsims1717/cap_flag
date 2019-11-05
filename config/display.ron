@@ -1,4 +1,4 @@
 (
   title: "cap_flag",
-  dimensions: Some((640, 480)),
+  dimensions: Some((1280, 720)),
 )

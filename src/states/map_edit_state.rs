@@ -7,7 +7,7 @@ use amethyst::{
     window::ScreenDimensions,
 };
 
-use crate::map::{load_test_map, load_terrain_pack, Map, map_to_world_iso, TerrainSet};
+use crate::resources::{load_test_map, load_terrain_pack, Map, map_to_world_iso, TerrainSet, MapDimensions};
 use log::info;
 
 pub struct MapEditorState;
@@ -18,9 +18,10 @@ impl SimpleState for MapEditorState {
 
         let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
 
-        init_camera(world, &dimensions);
 
         let mut map = load_test_map().unwrap();
+        init_camera(world, &dimensions, &map.dimensions);
+        world.insert(map.dimensions.clone());
         let terrain = load_terrain_pack(map.terrain_file.clone()).unwrap();
         let tile_sprites = load_terrain_textures(world, &terrain);
         init_map(world, &mut map, &terrain, &tile_sprites, &dimensions);
@@ -37,6 +38,9 @@ impl SimpleState for MapEditorState {
                 return Trans::Quit;
             }
 
+            // Window Resizing?
+
+
             // Listen to any key events
             if let Some(event) = get_key(&event) {
                 info!("handling key event: {:?}", event);
@@ -52,11 +56,12 @@ impl SimpleState for MapEditorState {
     }
 }
 
-fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
+fn init_camera(world: &mut World, dimensions: &ScreenDimensions, map_dimensions: &MapDimensions) {
     // Center the camera in the middle of the screen, and let it cover
     // the entire screen
+    let (offset_x, offset_y) = map_to_world_iso(map_dimensions.width as f32 / 2., map_dimensions.height as f32 / 2.);
     let mut transform = Transform::default();
-    transform.set_translation_xyz(dimensions.width() * 0.5, dimensions.height() * 0.5, 1.);
+    transform.set_translation_xyz(offset_x, -offset_y, 1.);
 
     world.create_entity()
         .with(Camera::standard_2d(dimensions.width(), dimensions.height()))
@@ -70,8 +75,7 @@ pub fn load_terrain_textures(world: &mut World, terrain: &TerrainSet) -> Vec<Spr
         let loader = world.read_resource::<Loader>();
         let texture_storage = world.read_resource::<AssetStorage<Texture>>();
         loader.load(
-//            format!("terrain/{}.{}", terrain.texture_file, terrain.texture_format),
-            "terrain/256color.png",
+            format!("terrain/{}.{}", terrain.texture_file, terrain.texture_format),
             ImageFormat::default(),
             (),
             &texture_storage,
@@ -83,8 +87,7 @@ pub fn load_terrain_textures(world: &mut World, terrain: &TerrainSet) -> Vec<Spr
         let loader = world.read_resource::<Loader>();
         let sheet_storage = world.read_resource::<AssetStorage<SpriteSheet>>();
         loader.load(
-//            format!("terrain/{}.ron", terrain.texture_file),
-            "terrain/256color.ron",
+            format!("terrain/{}.ron", terrain.texture_file),
             SpriteSheetFormat(texture_handle),
             (),
             &sheet_storage,
@@ -103,14 +106,12 @@ fn init_map(world: &mut World, map: &mut Map, terrain: &TerrainSet, tile_sprites
     map.build_tiles(terrain);
     for (y, row) in map.tiles.iter().enumerate() {
         for (x, t) in row.iter().enumerate() {
-            let (world_x, world_y) = map_to_world_iso(x as f32, y as f32, 64.);
+            let (world_x, world_y) = map_to_world_iso(x as f32, y as f32);
 
-            let screen_x = world_x + dimensions.width() * 0.5;
-            let screen_y = dimensions.height() * 0.5 - world_y;
             let mut transform = Transform::default();
             let scalar = 64. / terrain.tile_size as f32;
             transform.set_scale(Vector3::new(scalar, scalar, 0.));
-            transform.set_translation_xyz(screen_x, screen_y, (y as f32 + x as f32) * 0.001);
+            transform.set_translation_xyz(world_x, -world_y, (y as f32 + x as f32) * 0.001);
 
             world
                 .create_entity()

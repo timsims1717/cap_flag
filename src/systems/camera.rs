@@ -5,7 +5,10 @@ use amethyst::{
     renderer::camera::Camera,
     window::ScreenDimensions,
 };
-use crate::resources::{world_to_map_iso, MapDimensions, closest_point_in_map_iso};
+use crate::{
+    resources::MapDimensions,
+    util::{world_to_map_iso_simple, closest_point_in_map_iso}
+};
 
 pub struct CameraSystem;
 
@@ -45,10 +48,10 @@ impl<'s> System<'s> for CameraSystem {
                 transform.move_right(move_factor);
             }
             let cam_coords: Vector3<f32> = *transform.translation();
-            let (map_x, map_y) = world_to_map_iso(cam_coords[0], -cam_coords[1]);
+            let (map_x, map_y) = world_to_map_iso_simple(cam_coords[0], -cam_coords[1]);
             if map_x < 0. || map_x > map_dimensions.height as f32
                 || map_y < 0. || map_y > map_dimensions.height as f32 {
-                let (new_x, new_y) = closest_point_in_map_iso(map_x, map_y, map_dimensions.width as f32, map_dimensions.height as f32);
+                let (new_x, new_y) = closest_point_in_map_iso(map_x, map_y, map_dimensions.width as f32, map_dimensions.height as f32, 0.);
                 transform.set_translation_x(new_x);
                 transform.set_translation_y(-new_y);
             }

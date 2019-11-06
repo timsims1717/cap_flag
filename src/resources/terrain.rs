@@ -1,6 +1,9 @@
 use serde::{Serialize, Deserialize};
-use crate::resources::{TerrainTile, Tile};
-use amethyst::Error;
+use crate::components::{TerrainTile, Tile};
+use amethyst::{
+    Error,
+    renderer::SpriteRender,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TerrainSet {
@@ -23,11 +26,11 @@ impl TerrainSet {
         }
     }
 
-    pub fn create_tile(&self, t: char, e: usize) -> amethyst::Result<Tile> {
+    pub fn create_tile(&self, t: char, x: usize, y: usize, e: usize) -> amethyst::Result<Tile> {
         match self.tiles.clone()
             .into_iter()
             .find(|tile| tile.char_code == t) {
-            Some(tile) => Ok(tile.create_tile(e)),
+            Some(tile) => Ok(tile.create_tile(x, y, e)),
             _ => Err(Error::from_string("tile incompatible with terrain set"))
         }
     }
@@ -35,4 +38,8 @@ impl TerrainSet {
 
 fn default_description() -> String {
     "No Description".to_string()
+}
+
+pub struct TerrainSprites {
+    pub set: Vec<SpriteRender>
 }

@@ -1,11 +1,17 @@
+use amethyst::ecs::Entity;
 use serde::{Serialize, Deserialize};
 
-use crate::resources::{TerrainSet, Tile};
+use crate::components::Tile;
+use crate::resources::TerrainSet;
 
 #[derive(Serialize, Deserialize, Default, Debug, Clone)]
 pub struct MapDimensions {
     pub width: usize,
     pub height: usize,
+}
+
+pub struct TileMap {
+    pub v: Vec<Entity>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -24,7 +30,9 @@ impl Map {
         assert_eq!(self.dimensions.width * self.dimensions.height, self.data.chars().count());
         self.tiles = vec![vec![Tile::new(); self.dimensions.width]; self.dimensions.height];
         for (i, t) in self.data.chars().enumerate() {
-            self.tiles[i/self.dimensions.width][i%self.dimensions.width] = terrain.create_tile(t, 0).unwrap();
+            let y = i/self.dimensions.width;
+            let x = i%self.dimensions.width;
+            self.tiles[y][x] = terrain.create_tile(t, x, y, 0).unwrap();
         }
     }
 }

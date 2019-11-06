@@ -1,13 +1,27 @@
 use amethyst::{
     assets::{AssetStorage, Loader},
     core::{math::base::Vector3, transform::Transform},
+    ecs::prelude::Entity,
     input::{get_key, is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
     renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
     window::ScreenDimensions,
 };
 
-use crate::resources::{load_test_map, load_terrain_pack, Map, map_to_world_iso, TerrainSet, MapDimensions};
+use crate::{
+    components::Tile,
+    resources::{
+        CameraHandle,
+        load_test_map,
+        load_terrain_pack,
+        Map, MapDimensions,
+        TerrainSet,
+        TerrainSprites,
+        TileMap,
+        UISprites
+    },
+    util::{map_to_world_iso_simple, map_to_world_iso, TILE_SIZE, TileLayer, z_value_iso},
+};
 use log::info;
 
 pub struct MapEditorState;
@@ -20,11 +34,17 @@ impl SimpleState for MapEditorState {
 
 
         let mut map = load_test_map().unwrap();
-        init_camera(world, &dimensions, &map.dimensions);
         world.insert(map.dimensions.clone());
+        let camera = init_camera(world, &dimensions, &map.dimensions);
+        world.insert(CameraHandle{camera});
         let terrain = load_terrain_pack(map.terrain_file.clone()).unwrap();
-        let tile_sprites = load_terrain_textures(world, &terrain);
-        init_map(world, &mut map, &terrain, &tile_sprites, &dimensions);
+        world.insert(terrain.clone());
+        let terrain_sprites = load_terrain_textures(world, &terrain);
+        world.insert(TerrainSprites{ set: terrain_sprites.clone() });
+        let ui_sprites = load_ui_textures(world);
+        world.insert(UISprites { set: ui_sprites.clone() });
+        let tile_map = init_map(world, &mut map, &terrain, &terrain_sprites, &dimensions);
+        world.insert(tile_map);
     }
 
     fn handle_event(
@@ -56,17 +76,17 @@ impl SimpleState for MapEditorState {
     }
 }
 
-fn init_camera(world: &mut World, dimensions: &ScreenDimensions, map_dimensions: &MapDimensions) {
+fn init_camera(world: &mut World, dimensions: &ScreenDimensions, map_dimensions: &MapDimensions) -> Entity {
     // Center the camera in the middle of the screen, and let it cover
     // the entire screen
-    let (offset_x, offset_y) = map_to_world_iso(map_dimensions.width as f32 / 2., map_dimensions.height as f32 / 2.);
+    let (offset_x, offset_y) = map_to_world_iso_simple(map_dimensions.width as f32 / 2., map_dimensions.height as f32 / 2.);
     let mut transform = Transform::default();
     transform.set_translation_xyz(offset_x, -offset_y, 1.);
 
     world.create_entity()
         .with(Camera::standard_2d(dimensions.width(), dimensions.height()))
         .with(transform)
-        .build();
+        .build()
 }
 
 pub fn load_terrain_textures(world: &mut World, terrain: &TerrainSet) -> Vec<SpriteRender> {
@@ -102,23 +122,60 @@ pub fn load_terrain_textures(world: &mut World, terrain: &TerrainSet) -> Vec<Spr
         .collect()
 }
 
-fn init_map(world: &mut World, map: &mut Map, terrain: &TerrainSet, tile_sprites: &[SpriteRender], dimensions: &ScreenDimensions) {
+pub fn load_ui_textures(world: &mut World) -> Vec<SpriteRender> {
+    // tile textures
+    let texture_handle = {
+        let loader = world.read_resource::<Loader>();
+        let texture_storage = world.read_resource::<AssetStorage<Texture>>();
+        loader.load(
+            "sprites/ui_sprites.png",
+            ImageFormat::default(),
+            (),
+            &texture_storage,
+        )
+    };
+
+    // spritesheet definition for textures
+    let sheet_handle = {
+        let loader = world.read_resource::<Loader>();
+        let sheet_storage = world.read_resource::<AssetStorage<SpriteSheet>>();
+        loader.load(
+            "sprites/ui_sprites.ron",
+            SpriteSheetFormat(texture_handle),
+            (),
+            &sheet_storage,
+        )
+    };
+
+    (0..1)
+        .map(|i| SpriteRender {
+            sprite_sheet: sheet_handle.clone(),
+            sprite_number: i,
+        })
+        .collect()
+}
+
+fn init_map(world: &mut World, map: &mut Map, terrain: &TerrainSet, tile_sprites: &[SpriteRender], dimensions: &ScreenDimensions) -> TileMap {
     map.build_tiles(terrain);
+    let mut tile_map = TileMap { v: vec![] };
     for (y, row) in map.tiles.iter().enumerate() {
         for (x, t) in row.iter().enumerate() {
-            let (world_x, world_y) = map_to_world_iso(x as f32, y as f32);
+            let (world_x, world_y) = map_to_world_iso(x as f32, y as f32, t.elevation as f32, t.height as f32);
 
             let mut transform = Transform::default();
-            let scalar = 64. / terrain.tile_size as f32;
+            let scalar = TILE_SIZE / terrain.tile_size as f32;
             transform.set_scale(Vector3::new(scalar, scalar, 0.));
-            transform.set_translation_xyz(world_x, -world_y, (y as f32 + x as f32) * 0.001);
+            transform.set_translation_xyz(world_x, -world_y, z_value_iso(x as f32, y as f32, 0., TileLayer::Base));
 
-            world
+            tile_map.v.insert((y * map.dimensions.width) + x, world
                 .create_entity()
-                .with(tile_sprites[t.index].clone())
+                .with(t.clone())
+                .with(tile_sprites[t.sprite_index].clone())
                 .with(transform)
-                .build();
+                .build()
+            );
         }
     }
+    tile_map
 }
 

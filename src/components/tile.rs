@@ -8,6 +8,7 @@ pub enum Slope {
     None, NW, NE, SE, SW,
 }
 
+// serves as a tile "generator", from the Terrain resource pack
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TerrainTile {
     pub name: String,
@@ -20,6 +21,9 @@ pub struct TerrainTile {
 }
 
 impl TerrainTile {
+    // generates a Tile from the parameters and its own data
+    // randomly assigns a sprite to the tile if there are multiple sprites for this TerrainTile
+    // possibly add option for tiling by index instead of randomly
     pub fn create_tile(self, x: usize, y: usize, e: usize) -> Tile {
         return Tile{
             sprite_index: self.tiles[thread_rng().gen_range(0, self.tiles.len())],
@@ -32,6 +36,7 @@ impl TerrainTile {
     }
 }
 
+// a tile on the map
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Tile {
     pub sprite_index: usize,
@@ -66,6 +71,7 @@ fn slope_none() -> Slope {
     Slope::None
 }
 
+// a ui element for a tile
 pub struct TileUIElement {
     pub tile_x: usize,
     pub tile_y: usize,

@@ -3,6 +3,6 @@ Map(
         width: 8,
         height: 8,
     ),
-    data: "ggdgdgggdgdddgdgdggdggdgdgggggdgdgddddgdggdgdgdgggdggdggdddddddg",
+    data: "g2g1d1g1d0g0g0g0d1g1d1d0d0g0d0g0d1g0g0d0g0g0d0g0d0g0g0g0g0g0d0g0d0g0d0d0d0d0g0d0g0g0d0g0d0g0d0g0g0g0d0g0g0d0g0g0d0d0d0d0d0d0d0g0",
     terrain_file: "256color"
 )

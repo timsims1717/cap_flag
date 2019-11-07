@@ -5,6 +5,7 @@ use amethyst::{
     renderer::SpriteRender,
 };
 
+// a terrain resource pack
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TerrainSet {
     pub texture_file: String,
@@ -17,6 +18,7 @@ pub struct TerrainSet {
 }
 
 impl TerrainSet {
+    // pulls a TerrainTile using the char code
     pub fn find_terrain(&self, t: char) -> amethyst::Result<TerrainTile> {
         match self.tiles.clone()
             .into_iter()
@@ -26,6 +28,7 @@ impl TerrainSet {
         }
     }
 
+    // creates a Tile from a TerrainTile
     pub fn create_tile(&self, t: char, x: usize, y: usize, e: usize) -> amethyst::Result<Tile> {
         match self.tiles.clone()
             .into_iter()

@@ -7,6 +7,7 @@ use amethyst::{
         types::DefaultBackend,
         RenderingBundle,
     },
+    ui::{RenderUi, UiBundle},
     utils::application_root_dir,
 };
 use crate::systems::{CameraSystem,EditorTileSystem,WindowResizeSystem};
@@ -32,6 +33,7 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(
             InputBundle::<StringBindings>::new().with_bindings_from_file(&input_config)?,
         )?
+//        .with_bundle(UiBundle::<StringBindings>::new())?
         .with_bundle(TransformBundle::new())?
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
@@ -40,6 +42,7 @@ fn main() -> amethyst::Result<()> {
                         .with_clear([0., 0., 0., 1.0]),
                 )
                 .with_plugin(RenderFlat2D::default()),
+//                .with_plugin(RenderUi::default()),
         )?
         .with(CameraSystem, "camera", &[])
         .with(WindowResizeSystem::new(), "window_resize", &[])

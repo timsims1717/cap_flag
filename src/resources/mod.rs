@@ -18,6 +18,7 @@ pub fn load_test_map() -> amethyst::Result<Map> {
 //
 //}
 
+// loads a map from a string filename
 pub fn load_map(filename: String) -> amethyst::Result<Map> {
     use amethyst::utils::application_root_dir;
 
@@ -36,6 +37,7 @@ pub fn load_map(filename: String) -> amethyst::Result<Map> {
     Ok(map)
 }
 
+// loads a terrain pack from a string filename
 pub fn load_terrain_pack(filename: String) -> amethyst::Result<TerrainSet> {
     use amethyst::utils::application_root_dir;
 

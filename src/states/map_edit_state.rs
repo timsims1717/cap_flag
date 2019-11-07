@@ -5,6 +5,7 @@ use amethyst::{
     input::{get_key, is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
     renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
+//    ui::{Anchor, UiTransform},
     window::ScreenDimensions,
 };
 
@@ -32,19 +33,27 @@ impl SimpleState for MapEditorState {
 
         let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
 
-
+        // load map from disc (test map right now, will be loaded in loading state I think)
         let mut map = load_test_map().unwrap();
+        // get map dimensions, save as resource
         world.insert(map.dimensions.clone());
         let camera = init_camera(world, &dimensions, &map.dimensions);
+        // save camera as resource
         world.insert(CameraHandle{camera});
         let terrain = load_terrain_pack(map.terrain_file.clone()).unwrap();
+        // save terrain pack as resource
         world.insert(terrain.clone());
         let terrain_sprites = load_terrain_textures(world, &terrain);
+        // save terrain sprites as resource
         world.insert(TerrainSprites{ set: terrain_sprites.clone() });
         let ui_sprites = load_ui_textures(world);
+        // save ui sprites as resource
         world.insert(UISprites { set: ui_sprites.clone() });
         let tile_map = init_map(world, &mut map, &terrain, &terrain_sprites, &dimensions);
+        // save set of tiles as resource
         world.insert(tile_map);
+
+//        init_editor_panel(world, &ui_sprites);
     }
 
     fn handle_event(
@@ -57,8 +66,6 @@ impl SimpleState for MapEditorState {
             if is_close_requested(&event) || is_key_down(&event, VirtualKeyCode::Escape) {
                 return Trans::Quit;
             }
-
-            // Window Resizing?
 
 
             // Listen to any key events
@@ -81,6 +88,7 @@ fn init_camera(world: &mut World, dimensions: &ScreenDimensions, map_dimensions:
     // the entire screen
     let (offset_x, offset_y) = map_to_world_iso_simple(map_dimensions.width as f32 / 2., map_dimensions.height as f32 / 2.);
     let mut transform = Transform::default();
+    // reverse y to put origin at top of map
     transform.set_translation_xyz(offset_x, -offset_y, 1.);
 
     world.create_entity()
@@ -102,7 +110,6 @@ pub fn load_terrain_textures(world: &mut World, terrain: &TerrainSet) -> Vec<Spr
         )
     };
 
-    // spritesheet definition for textures
     let sheet_handle = {
         let loader = world.read_resource::<Loader>();
         let sheet_storage = world.read_resource::<AssetStorage<SpriteSheet>>();
@@ -123,7 +130,7 @@ pub fn load_terrain_textures(world: &mut World, terrain: &TerrainSet) -> Vec<Spr
 }
 
 pub fn load_ui_textures(world: &mut World) -> Vec<SpriteRender> {
-    // tile textures
+    // ui textures
     let texture_handle = {
         let loader = world.read_resource::<Loader>();
         let texture_storage = world.read_resource::<AssetStorage<Texture>>();
@@ -135,7 +142,6 @@ pub fn load_ui_textures(world: &mut World) -> Vec<SpriteRender> {
         )
     };
 
-    // spritesheet definition for textures
     let sheet_handle = {
         let loader = world.read_resource::<Loader>();
         let sheet_storage = world.read_resource::<AssetStorage<SpriteSheet>>();
@@ -156,6 +162,7 @@ pub fn load_ui_textures(world: &mut World) -> Vec<SpriteRender> {
 }
 
 fn init_map(world: &mut World, map: &mut Map, terrain: &TerrainSet, tile_sprites: &[SpriteRender], dimensions: &ScreenDimensions) -> TileMap {
+    // initialize tiles (this will be done in loading state)
     map.build_tiles(terrain);
     let mut tile_map = TileMap { v: vec![] };
     for (y, row) in map.tiles.iter().enumerate() {
@@ -179,3 +186,15 @@ fn init_map(world: &mut World, map: &mut Map, terrain: &TerrainSet, tile_sprites
     tile_map
 }
 
+//fn init_editor_panel(world: &mut World, ui_sprites: &[SpriteRender]) {
+//    let transform = UiTransform::new(
+//        format!("terrain_panel_{}", 0),
+//        Anchor::TopLeft, Anchor::TopLeft,
+//        0.,0.,1.,32.,32.
+//    );
+//    world
+//        .create_entity()
+//        .with(ui_sprites[1].clone())
+//        .with(transform)
+//        .build();
+//}

@@ -7,6 +7,7 @@ use amethyst::{
 use crate::components::{TileUIElementType, TileUIElement};
 use crate::util::{map_to_world_iso, z_value_iso, TileLayer, TILE_SIZE};
 
+// creates a ui element for a tile
 pub fn create_tile_ui(
     entities: &Entities,
     sprite: SpriteRender,

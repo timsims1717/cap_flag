@@ -10,9 +10,8 @@ use crate::{
     components::{Tile, TileUIElement, TileUIElementType},
     enitities::{create_tile_ui},
     resources::{CameraHandle, MapDimensions, TerrainSet, TerrainSprites, TileMap, UISprites},
-    util::{map_to_world_iso_simple, mouse_to_map_iso_simple, world_to_map_iso_simple},
+    util::mouse_to_map_iso,
 };
-use crate::util::mouse_to_world_iso_simple;
 
 pub struct EditorTileSystem;
 
@@ -50,33 +49,34 @@ impl<'s> System<'s> for EditorTileSystem {
         tile_map,
         ui_sprites,
     ): Self::SystemData) {
-        if let Some((x, y)) = input_handler.mouse_position() {
+        if let Some((xf, yf)) = input_handler.mouse_position() {
+            // todo: ignore if inside editor panel or if in menu
+            // translate the mouse coordinates to map coordinates
             let camera_transform = transforms.get(camera_handle.camera).unwrap();
             let camera = cameras.get(camera_handle.camera).unwrap();
-            let (world_x, world_y) = mouse_to_world_iso_simple(x, y, &screen_dimensions, camera, camera_transform);
-            let (map_x, map_y) = mouse_to_map_iso_simple(x, y, &screen_dimensions, camera, camera_transform);
-            let (map_x_i, map_y_i) = (map_x.floor() as isize, map_y.floor() as isize);
-            if map_x_i >= 0 && map_x_i < map_dimensions.width as isize
-                && map_y_i >= 0 && map_y_i < map_dimensions.height as isize {
-                let (map_x_u, map_y_u) = (map_x_i as usize, map_y_i as usize);
-                let tile_ui_need: Vec<(usize, usize)> = vec![(map_x_u, map_y_u)];
+            if let Some((map_x, map_y)) = mouse_to_map_iso(xf, yf, &map_dimensions,&screen_dimensions, camera, camera_transform, &tile_map.clone(), &tiles) {
+                // todo: this is where more tiles can be highlighted
+                let tile_ui_need: Vec<(usize, usize)> = vec![(map_x, map_y)];
+                // go through all ui_tiles, if they aren't needed, remove them, if they are, add them to "found"
                 let mut tile_ui_found: Vec<(usize, usize)> = vec![];
                 for (entity, tile_ui) in (&*entities, &mut tiles_ui).join() {
-                    if tile_ui.tile_x != map_x_u || tile_ui.tile_y != map_y_u {
+                    if tile_ui.tile_x != map_x || tile_ui.tile_y != map_y {
                         entities.delete(entity);
                     } else {
                         tile_ui_found.push((tile_ui.tile_x, tile_ui.tile_y));
                     }
                 }
                 for (x, y) in tile_ui_need.iter() {
+                    // unless the ui_tile already exists in found ...
                     if !(tile_ui_found.iter().any(|(ix, iy)| ix == x && iy == y)) {
-                        let parent = tile_map.v[y * map_dimensions.width + x];
+                        let parent = tile_map.get(*x, *y, map_dimensions.width);
                         if let Some(tile) = tiles.get(parent) {
                             create_tile_ui(&entities, ui_sprites.set[0].clone(), tile.height, *x, *y, tile.elevation, TileUIElementType::EditorMouseOver, &lazy_update);
                         }
                     }
                 }
             } else {
+                // if mouse is outside the map
                 for (entity, _) in (&*entities, &mut tiles_ui).join() {
                     entities.delete(entity);
                 }
